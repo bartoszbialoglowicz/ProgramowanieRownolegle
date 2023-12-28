@@ -8,13 +8,15 @@ namespace Lab01.Factories
 {
     internal class RangeFactory
     {
-        private List<Range> ranges;
 
-        public List<Range> Ranges { get => ranges; set => ranges = value; }
-
-        public RangeFactory(List<Range> rangeList)
+        public static List<Calcs.Range> GetRanges()
         {
-            this.ranges = rangeList;
+            return new List<Calcs.Range>
+            {
+                new Calcs.Range(-10, 10),
+                new Calcs.Range(-5, 20),
+                new Calcs.Range(-5, 0),
+            };
         }
     }
 }
