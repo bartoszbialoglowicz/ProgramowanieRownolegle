@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Lab01.Math;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,31 +9,7 @@ namespace Lab01
 {
     class Lab2z3
     {
-
-        // Funkcja y = 2x + 2x^2
-        private static double fn1(double x)
-        {
-            return (2 * x) + 2 * Math.Pow(x, 2);
-        }
-
-        // Funkcja y = 2x^2
-        private static double fn2(double x)
-        {
-            return 2 * Math.Pow(x, 2);
-        }
-
-        // Funkcja y = 2x - 3
-        private static double fn3(double x)
-        {
-            return 2 * x - 3;
-        }
-
-        // Funkcja wielomianowa z lab2b
-        // f(x) = 3x^3 - 2x^2 + 5x - 3
-        private static double fn4(double x)
-        {
-            return (3 * Math.Pow(x, 3)) - (2 * Math.Pow(x, 2)) + (5 * x) - 3;
-        }
+        private double totalProgress;
 
         private int pobierzDaneWejsciowe()
         {
@@ -42,9 +19,9 @@ namespace Lab01
             // Wykonuj dopoki uzytkownik nie poda odpowiedniej wartosci
             do
             {
-                Console.WriteLine("1. y = 2x + 2x^2\n2. y = 2x^2\n3. y = 2x - 3\nWybierz opcję: ");
+                Console.WriteLine("1. y = 2x + 2x^2\n2. y = 2x^2\n3. y = 2x - 3\n4. y = 3x^3 - 2x^2 + 5x - 3\nWybierz opcję: ");
                 input = Console.ReadLine();
-            } while (input != "1" && input != "2" && input != "3");
+            } while (input != "1" && input != "2" && input != "3" && input != "4");
 
             
             return int.Parse(input);
@@ -59,7 +36,8 @@ namespace Lab01
         private void doWorkMethod(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
             var worker = sender as System.ComponentModel.BackgroundWorker;
-            Calka calka = e.Argument as Calka;
+            WorkArguments arg = e.Argument as WorkArguments;
+            double res = arg.CurrentMethod ? arg.Calka.trapezy() : arg.Calka.prostokaty();
             for (int i = 0; i <= 100; i+= 10)
             {
                 if (!worker.CancellationPending)
@@ -72,32 +50,44 @@ namespace Lab01
                     e.Cancel = true;
                 }
             }
-            e.Result = calka.trapezy();
+            string calcMethod = arg.CurrentMethod ? "Metoda trapezów" : "Metoda prostokątów";
+            e.Result = $"Ukończono obliczenia dla przedziału [{arg.Calka.X1},{arg.Calka.X2}] {calcMethod}, wynik: {res}";
         }
 
         private void workerCompletedMethod(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {
+
             if (e.Cancelled)
             {
                 Console.WriteLine("Zatrzymano obliczenia");
             }
             else
             {
-                Console.WriteLine($"Ukonczono obliczenia. Wynik: {e.Result}");
+                Console.WriteLine(e.Result);
             }
         }
         private void runBgWorkers(Calka[] calki)
         {
             // Inicjalizacja zadań w tle
-            System.ComponentModel.BackgroundWorker[] backgroundWorkers = new System.ComponentModel.BackgroundWorker[calki.Length];
+            System.ComponentModel.BackgroundWorker[] backgroundWorkers = new System.ComponentModel.BackgroundWorker[calki.Length*2];
+            int currentWorker = 0;
             for (int i = 0; i < calki.Length; i++)
             {
-                backgroundWorkers[i] = new System.ComponentModel.BackgroundWorker();
-                backgroundWorkers[i].DoWork += doWorkMethod;
-                backgroundWorkers[i].ProgressChanged+= progressReporter;
-                backgroundWorkers[i].WorkerReportsProgress = true;
-                backgroundWorkers[i].RunWorkerAsync(calki[i]);
-                backgroundWorkers[i].RunWorkerCompleted += workerCompletedMethod;
+                // BG worker dla metody trapezow
+                backgroundWorkers[currentWorker] = new System.ComponentModel.BackgroundWorker();
+                backgroundWorkers[currentWorker].DoWork += doWorkMethod;
+                backgroundWorkers[currentWorker].ProgressChanged+= progressReporter;
+                backgroundWorkers[currentWorker].WorkerReportsProgress = true;
+                backgroundWorkers[currentWorker].RunWorkerAsync(new WorkArguments(calki[i], true));
+                backgroundWorkers[currentWorker].RunWorkerCompleted += workerCompletedMethod;
+
+                // BG worker dla metody prostokatow
+                backgroundWorkers[currentWorker+1] = new System.ComponentModel.BackgroundWorker();
+                backgroundWorkers[currentWorker+1].DoWork += doWorkMethod;
+                backgroundWorkers[currentWorker+1].ProgressChanged += progressReporter;
+                backgroundWorkers[currentWorker+1].WorkerReportsProgress = true;
+                backgroundWorkers[currentWorker+1].RunWorkerAsync(new WorkArguments(calki[i], false));
+                backgroundWorkers[currentWorker+1].RunWorkerCompleted += workerCompletedMethod;
             }
         }
 
@@ -109,9 +99,6 @@ namespace Lab01
             int n = UserInput.getNumber("Wprowadz liczbe odcinkow: ", true);
             CalkaFn fn = fn1;
 
-
-            // TODO: trapezy
-
             switch(index)
             {
                 case 1:
@@ -122,6 +109,9 @@ namespace Lab01
                     break;
                 case 3:
                     fn = fn3;
+                    break;
+                case 4:
+                    fn = fn4;
                     break;
             }
 
