@@ -33,7 +33,6 @@ namespace Lab01.Calcs
                 return x1 + Math.Abs(x2);
             if (x1 <= 0 && x2 >= 0)
                 return x2 + Math.Abs(x1);
-
             return Math.Abs(Math.Abs(x1) - Math.Abs(x2));
         }
     }

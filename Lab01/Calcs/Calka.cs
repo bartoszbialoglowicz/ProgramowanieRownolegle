@@ -15,17 +15,23 @@ namespace Lab01.Calcs
 
         internal Range Range { get => range; set => range = value; }
 
+        private double getStep(double rangeLength, int stepCount)
+        {
+            return rangeLength / stepCount;
+        }
+
         public Calka(Calcs.Range range, Functions.IFunction fn, int stepCount)
         {
             this.range = range;
             this.fn = fn;
-            this.step = this.range.getLength(stepCount);
+            this.step = this.getStep(this.range.getLength(stepCount), stepCount);
         }
 
         public double trapezy()
         {
             // Suma wartosci pol trapezow
             double sum = 0;
+            Console.WriteLine(this.step);
             for (double i = range.X1; i < range.X2; i += step)
             {
                 // Wartosc funkcji w poczatkowym punkcie odcinka
